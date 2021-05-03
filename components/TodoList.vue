@@ -1,14 +1,15 @@
 <template>
   <el-row
     :gutter="20"
+    class="mb-2"
   >
     <el-col
       :span="2"
     >
       <el-checkbox
-        @click="update"
+        @change="change"
         border
-        v-model="item.is_completed"
+        v-model="todo.is_completed"
       />
     </el-col>
     <el-col
@@ -16,13 +17,15 @@
     >
       <el-popover
         placement="top-start"
-        title="Item details"
-        width="300"
+        :title="item.description"
+        width="240"
         trigger="hover"
-        content="this is content, this is content, this is content"
+        :content="`Created by: ${item.user.name}
+          Completed at: ${item.completed_at ? item.completed_at : '---'}`"
       >
         <el-input
-          v-model="item.description"
+          @input="input"
+          v-model="todo.description"
           slot="reference"
         />
       </el-popover>
@@ -33,6 +36,7 @@
       <el-button
         icon="el-icon-edit"
         circle
+        :disabled="disabled"
         @click="update"
       />
       <el-button
@@ -52,17 +56,56 @@
       item:
         type: Object
         default: {}
+      taskId:
+        type: Number
+        default: 0
     data: ->
-      is_completed: false
-      description: ''
+      disabled: true
+      todo: {}
     methods:
+      input: (value) ->
+        if @todo.description is @item.description
+          @disabled = true
+        else
+          @todo.description = value
+          @disabled = false
+
+      change: ->
+        if @todo.is_completed
+          @todo.is_completed = true
+        else
+          @todo.is_completed = false
+          @todo.completed_at = null
+        @update()
       update: ->
-        console.log 'HOLA'
+        {data:response} = await @$axios.put('todos/'+ @item.id, @todo)
+
+        if !response.error
+          @$emit 'update-item', response.item
+          @disabled = true
+
+        @$message
+          message: response.message
+          showClose: true
+          type: if response.error then 'error' else 'success'
       destroy: ->
-        @$axios.delete('todos/'+item.id, item)
-        .then ({ success, item, message, error}) =>
-          console.log error
+        {data:response} = await @$axios.delete('todos/'+ @item.id, @todo)
+
+        if !response.error
+          @$emit 'destroy-item', @item
+
+        @$message
+          message: response.message
+          showClose: true
+          type: if response.error then 'error' else 'success'
     mounted: ->
-      @is_completed = @item.is_completed
-      @description = @item.description
+      @todo = Object.assign {}, {@item...}
+
 </script>
+
+<style>
+  .mb-2 {
+    margin-bottom: 8px;
+  }
+
+</style>

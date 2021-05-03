@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    v-loading="loading"
+  >
     <el-row
       :gutter="20"
       class="mt-3 px-3"
@@ -40,6 +42,8 @@
           >
             <TodoList
               :item="todo"
+              @destroy-item="updateTasks"
+              @update-item="updateTasks"
             />
           </div>
         </el-card>
@@ -60,6 +64,14 @@
       return {
         tasks
       }
+    data: ->
+      loading: false
+    methods:
+      updateTasks: ->
+        @loading = true
+        {data:@tasks} = await @$axios.get('tasks')
+        @loading = false
+
 
 </script>
 
