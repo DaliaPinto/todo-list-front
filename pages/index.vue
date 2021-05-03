@@ -32,9 +32,46 @@
               type="primary"
               size="mini"
               icon="el-icon-plus"
+              @click="show_input = true"
             >
               Add item
             </el-button>
+
+            <div
+              v-if="show_input && task.description === 'To do'"
+            >
+              <el-divider></el-divider>
+              <el-row
+                :gutter="20"
+              >
+                <el-col
+                  :span="18"
+                >
+                  <el-input
+                    @input="input"
+                    v-model="todo.description"
+                    placeholder="Type description item here"
+                  />
+                </el-col>
+
+                <el-col
+                  :span="6"
+                >
+                  <el-button
+                    type="primary"
+                    icon="el-icon-check"
+                    :disabled="disabled"
+                    @click="store"
+                    circle
+                  />
+                  <el-button
+                    icon="el-icon-remove-outline"
+                    circle
+                    @click="removeTask"
+                  />
+                </el-col>
+              </el-row>
+            </div>
           </div>
           <div
             v-for="todo in task.todos"
@@ -65,14 +102,36 @@
         tasks
       }
     data: ->
+      todo: {
+        description: null
+      }
+      disabled: true
+      show_input: false
       loading: false
     methods:
+      input: (value) ->
+        if value is "" or value is null
+          @disabled = true
+        else
+          @disabled = false
+      removeTask: ->
+        @disabled = true
+        @show_input = false
+        @todo.description = ''
       updateTasks: ->
         @loading = true
         {data:@tasks} = await @$axios.get('tasks')
         @loading = false
+      store: ->
+        {data:response} = await @$axios.post('todos', @todo)
+        if !response.error
+          @removeTask()
 
-
+        @$message
+          message: response.message
+          showClose: true
+          type: if response.error then 'error' else 'success'
+        @updateTasks()
 </script>
 
 <style>

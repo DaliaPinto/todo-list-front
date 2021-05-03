@@ -67,7 +67,11 @@
         if @todo.description is @item.description
           @disabled = true
         else
-          @todo.description = value
+          @disabled = false
+
+        if value is "" or value is null
+          @disabled = true
+        else
           @disabled = false
 
       change: ->
