@@ -22,20 +22,24 @@
               :type="task.todos.length > 0 ? 'success' : 'danger'"
               class="badge"
             >
-              <div>
+              <h3>
                 {{ task.description }}
-              </div>
+              </h3>
             </el-badge>
-            <el-button
-              v-if="task.description === 'To do'"
-              class="right"
-              type="primary"
-              size="mini"
-              icon="el-icon-plus"
-              @click="show_input = true"
+            <el-tooltip
+              effect="dark"
+              content="Add item"
+              placement="top"
             >
-              Add item
-            </el-button>
+              <el-button
+                v-if="task.description === 'To do'"
+                class="right"
+                type="primary"
+                icon="el-icon-plus"
+                circle
+                @click="show_input = true"
+              />
+            </el-tooltip>
 
             <div
               v-if="show_input && task.description === 'To do'"
@@ -96,6 +100,8 @@
     components: {
       TodoList
     }
+
+    #get taks with theirs todos
     asyncData: ({ $axios, app}) =>
       {data:tasks} = await $axios.get('tasks')
       return {
@@ -109,19 +115,26 @@
       show_input: false
       loading: false
     methods:
+      #Validations form
       input: (value) ->
         if value is "" or value is null
           @disabled = true
         else
           @disabled = false
+
+      #if remove form, clean input
       removeTask: ->
         @disabled = true
         @show_input = false
         @todo.description = ''
+
+      #update taks
       updateTasks: ->
         @loading = true
         {data:@tasks} = await @$axios.get('tasks')
         @loading = false
+
+      #save new item
       store: ->
         {data:response} = await @$axios.post('todos', @todo)
         if !response.error
@@ -131,6 +144,7 @@
           message: response.message
           showClose: true
           type: if response.error then 'error' else 'success'
+
         @updateTasks()
 </script>
 

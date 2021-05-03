@@ -18,14 +18,19 @@
       <el-popover
         placement="top-start"
         :title="item.description"
-        width="240"
+        width="300"
         trigger="hover"
-        :content="`Created by: ${item.user.name}
-          Completed at: ${item.completed_at ? item.completed_at : '---'}`"
       >
+        <div>
+          <strong>Created by: </strong>{{ item.user.name }}
+          <br>
+          <strong>Completed at: </strong>{{ item.completed_at || '---' }}
+        </div>
+
         <el-input
           @input="input"
           v-model="todo.description"
+          placeholder="Type description item here"
           slot="reference"
         />
       </el-popover>
@@ -56,13 +61,13 @@
       item:
         type: Object
         default: {}
-      taskId:
-        type: Number
-        default: 0
+
     data: ->
       disabled: true
       todo: {}
+      
     methods:
+      #Validations form
       input: (value) ->
         if @todo.description is @item.description
           @disabled = true
@@ -74,6 +79,7 @@
         else
           @disabled = false
 
+      #updating if is_completed is true
       change: ->
         if @todo.is_completed
           @todo.is_completed = true
@@ -81,6 +87,8 @@
           @todo.is_completed = false
           @todo.completed_at = null
         @update()
+
+      #update and emit an event
       update: ->
         {data:response} = await @$axios.put('todos/'+ @item.id, @todo)
 
@@ -92,16 +100,26 @@
           message: response.message
           showClose: true
           type: if response.error then 'error' else 'success'
+
+      #destrog and emit an event
       destroy: ->
-        {data:response} = await @$axios.delete('todos/'+ @item.id, @todo)
+        @$confirm "Are you sure to delete this item?", 'Warning',
+            confirmButtonText: "Accept",
+            showCancelButton: true,
+            type: 'warning'
+        .then =>
+          {data:response} = await @$axios.delete('todos/'+ @item.id, @todo)
 
-        if !response.error
-          @$emit 'destroy-item', @item
+          if !response.error
+            @$emit 'destroy-item', @item
 
-        @$message
-          message: response.message
-          showClose: true
-          type: if response.error then 'error' else 'success'
+          @$message
+            message: response.message
+            showClose: true
+            type: if response.error then 'error' else 'success'
+        .catch ->
+
+    #cloning principal prop
     mounted: ->
       @todo = Object.assign {}, {@item...}
 
